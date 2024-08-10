@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block body %}
+<div id="content-wrapper">
+    <div class="header-info">
+        <span class="highlight_class">
+            <h1>Title: </h1>
+            <p class="highlight">{{one_article.title}}</p>
+        </span>
+        <p class="creation-time">{{one_article.creation_time}}</p>
+    </div>
+    <hr>
+    <h2>Content:</h2>
+    <div>
+        {{one_article.content}}
+    </div>
+    <p class="author-info">By {{one_article.email}}</p>
+</div>
+<div class="add__comments">
+    <form action="/comment/{{one_article.id}}" method="post" novalidate>
+        {{ render_field(form.comment) }}
+        <button class="register__button" type="submit">Add comment</button>
+    </form>
+</div>
+<h1 class="comment_toggle">Comments <i class="ri-arrow-down-s-line dropdown__arrow rotate_comment_arrow"></i></h1>
+<div class="show__comments">
+    {% if comments %}
+    <div class="comment-holder">
+        {% for comment in comments %}
+        <div class="one-comment">
+            <p>{{comment.content}}</p>
+            <div class="comment-info">
+                <p>{{comment.email}}</p>
+                <p>{{comment.creation_time}}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert-warning_comment">There is not any comment</div>
+    {% endif %}
+</div>
+{% endblock %}

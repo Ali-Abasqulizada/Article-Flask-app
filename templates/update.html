@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block body %}
+<div id="index_page">
+    <h1 id="h1">Update "{{form.title.data}}" article</h1>
+    <hr>
+    <form class="register__form" method="post" novalidate>
+        {{ render_field(form.title) }}
+        {{ render_field(form.content) }}
+        <button class="register__button" type="submit">Update</button>
+    </form>
+</div>
+{% endblock %}

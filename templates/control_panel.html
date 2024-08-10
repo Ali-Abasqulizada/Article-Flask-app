@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block body %}
+<div id="index_page">
+    <h1 id="h1">{{session["name"] + ' ' + session["surname"]}}'s contol panel</h1>
+    <hr>
+    <button class="control_panel__button" style="margin-top: 20px;">
+        <a href="/add_article">Add article</a>
+    </button>
+    {% if all_articles %}
+    <table class="article-table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Creation date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for article in all_articles %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><a href="/article/{{article.id}}" id="a">{{ article["title"] }}</a></td>
+                <td>{{ article["email"] }}</td>
+                <td>{{ article["creation_time"] }}</td>
+                <td>
+                    <a href="/edit/{{article.id}}" class="action-button edit">Edit</a>
+                    <a href="/delete/{{article.id}}" class="action-button delete">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="alert-warning_comment" style="margin-top: 20px;">{{session["name"]}} {{session["surname"]}} has not any article</div>
+    {% endif %}
+</div>
+{% endblock %}
+

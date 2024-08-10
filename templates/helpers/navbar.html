@@ -1,0 +1,95 @@
+<head>
+    <!--=============== REMIXICONS ===============-->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body>
+    <!--=============== HEADER ===============-->
+    <header class="header">
+        <nav class="nav container">
+            <div class="nav__data">
+                <a href="/" class="nav__logo">
+                    <i class="ri-code-s-slash-line"></i> SENJA
+                </a>
+
+                <div class="nav__toggle" id="nav-toggle">
+                    <i class="ri-menu-line nav__toggle-menu"></i>
+                    <i class="ri-close-line nav__toggle-close"></i>
+                </div>
+            </div>
+            <!--=============== NAV MENU ===============-->
+            <div class="nav__menu" id="nav-menu">
+                <ul class="nav__list">
+                    <!--=============== DROPDOWN 1 ===============-->
+                    <li class="dropdown__item">                      
+                        <div class="nav__link dropdown__button">
+                            About <i class="ri-arrow-down-s-line dropdown__arrow"></i>
+                        </div>
+                        <div class="dropdown__container">
+                            <div class="dropdown__content">
+                                <div class="dropdown__group">
+                                    <div class="dropdown__icon">
+                                        <i class="ri-flashlight-line"></i>
+                                    </div>
+
+                                    <span class="dropdown__title">Github</span>
+
+                                    <ul class="dropdown__list">
+                                        <li>
+                                            <a href="https://github.com/Ali-Abasqulizada" class="dropdown__link">Visit Github Page</a>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div class="dropdown__group">
+                                    <div class="dropdown__icon">
+                                        <i class="ri-heart-3-line"></i>
+                                    </div>
+
+                                    <span class="dropdown__title">Linkedin</span>
+
+                                    <ul class="dropdown__list">
+                                        <li>
+                                            <a href="https://www.linkedin.com/in/ali-abasqulizada-671a64272/" class="dropdown__link">Visit Linkedin Page</a>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div class="dropdown__group">
+                                    <div class="dropdown__icon">
+                                        <i class="ri-book-mark-line"></i>
+                                    </div>
+
+                                    <span class="dropdown__title">Email</span>
+
+                                    <ul class="dropdown__list">
+                                        <li>
+                                            <a href="https://mail.google.com/mail/u/0/#inbox" class="dropdown__link">Send an email to ali.abasqulu@gmail.com</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li>
+                        <a href="/articles" class="nav__link">Articles</a>
+                    </li>
+                    {% if "logged_in" in session %}
+                    <li>
+                        <a href="/control_panel" class="nav__link">Control Panel</a>
+                    </li>
+                    <li>
+                        <a href="/logout" class="nav__link">Logout</a>
+                    </li>
+                    {% else %}
+                    <li>
+                        <a href="/login" class="nav__link">Login</a>
+                    </li>
+                    <li>
+                        <a href="/register" class="nav__link">Register</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </nav>
+    </header>
+</body>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JENJA</title>
+</head>
+<link rel="stylesheet" href="../static/css/style.css">
+<body>
+    {% include "helpers/navbar.html" %}
+    <div class="dummy"></div>
+    {% include "helpers/messages.html" %}
+    {% from "helpers/form_helper.html" import render_field %}
+    {% block body %}{% endblock %}
+</body>
+<script src="../static/js/script.js"></script>
+</html>
