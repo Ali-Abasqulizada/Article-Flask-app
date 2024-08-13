@@ -3,6 +3,37 @@ from flask_mysqldb import MySQL
 from wtforms import Form, StringField, PasswordField, TextAreaField, validators
 from passlib.hash import sha512_crypt
 from functools import wraps
+import smtplib
+import dns.resolver
+
+def check_email_exist(email):
+    try:
+        # Get domain from email
+        domain = email.split('@')[1]
+
+        # Get MX record for the domain
+        records = dns.resolver.resolve(domain, 'MX')
+        mx_record = str(records[0].exchange)
+
+        # SMTP lib setup (use default port)
+        server = smtplib.SMTP()
+        server.set_debuglevel(0)
+
+        # SMTP Conversation
+        server.connect(mx_record)
+        server.helo(server.local_hostname)  # server.local_hostname(Get local server hostname)
+        server.mail('me@domain.com')  # Must be a valid email address
+        code, message = server.rcpt(email)
+        server.quit()
+
+        # Assume 250 as Success
+        if code == 250:
+            return True
+        else:
+            return False
+
+    except Exception as e:
+        return False
 
 app = Flask(__name__)
 app.secret_key = "STAR"
@@ -83,21 +114,23 @@ def register():
         surname = form.surname.data
         email = form.email.data
         password = sha512_crypt.hash(form.password.data)  # Add password to db in a way that it can not be readed
-        cursor = mysql.connection.cursor()
-        sql1 = "select * from users where email = %s"
-        result = cursor.execute(sql1, (email, ))
-        print("result: ", result)
-        if result == 0:
-            sql2 = "Insert into users(name, surname, email, password) values(%s, %s, %s, %s)"
-            cursor.execute(sql2, (name, surname, email, password))
-            mysql.connection.commit()
-            cursor.close()
-            flash("You successfully entered", "success")
-            return redirect(url_for("login"))
-        else:  # Check if user is aleady exist
-            cursor.close()
-            flash("Email is already taken", "error")
-            return redirect(url_for("register"))
+        if check_email_exist(email):
+            cursor = mysql.connection.cursor()
+            sql1 = "select * from users where email = %s"
+            result = cursor.execute(sql1, (email, ))
+            print("result: ", result)
+            if result == 0:
+                sql2 = "Insert into users(name, surname, email, password) values(%s, %s, %s, %s)"
+                cursor.execute(sql2, (name, surname, email, password))
+                mysql.connection.commit()
+                cursor.close()
+                flash("You successfully entered", "success")
+                return redirect(url_for("login"))
+            else:  # Check if user is aleady exist
+                cursor.close()
+                flash("Email is already taken", "error")
+                return redirect(url_for("register"))
+        flash("Email is not exist", "error")
     return render_template("register.html", form=form)
 
 
