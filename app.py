@@ -1,39 +1,12 @@
+import smtplib
+import dns.resolver
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_mysqldb import MySQL
 from wtforms import Form, StringField, PasswordField, TextAreaField, validators
 from passlib.hash import sha512_crypt
 from functools import wraps
-import smtplib
-import dns.resolver
-
-def check_email_exist(email):
-    try:
-        # Get domain from email
-        domain = email.split('@')[1]
-
-        # Get MX record for the domain
-        records = dns.resolver.resolve(domain, 'MX')
-        mx_record = str(records[0].exchange)
-
-        # SMTP lib setup (use default port)
-        server = smtplib.SMTP()
-        server.set_debuglevel(0)
-
-        # SMTP Conversation
-        server.connect(mx_record)
-        server.helo(server.local_hostname)  # server.local_hostname(Get local server hostname)
-        server.mail('me@domain.com')  # Must be a valid email address
-        code, message = server.rcpt(email)
-        server.quit()
-
-        # Assume 250 as Success
-        if code == 250:
-            return True
-        else:
-            return False
-
-    except Exception as e:
-        return False
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 app = Flask(__name__)
 app.secret_key = "STAR"
@@ -90,6 +63,64 @@ class CommentForm(Form):
     ])
 
 
+def check_email_exist(email):  # Check emil is exist or not witth help of the SMPT server
+    try:
+        # Get domain from email
+        domain = email.split('@')[1]
+
+        # Get MX record for the domain
+        records = dns.resolver.resolve(domain, 'MX')
+        mx_record = str(records[0].exchange)
+
+        # SMTP lib setup (use default port)
+        server = smtplib.SMTP()
+        server.set_debuglevel(0)
+
+        # SMTP Conversation
+        server.connect(mx_record)
+        server.helo(server.local_hostname)  # server.local_hostname(Get local server hostname)
+        server.mail('me@domain.com')  # Must be a valid email address
+        code, message = server.rcpt(email)
+        server.quit()
+
+        # Assume 250 as Success
+        if code == 250:
+            return True
+        else:
+            return False
+
+    except Exception:
+        return False
+
+
+def send_message_to_email(receiver_email, title, body):
+    # Email details
+    # SMTP server details
+    sender_email = "flaskapp2004@gmail.com"
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+    password = "gacgbjeapyaxifla"
+
+    # Create the email
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+    msg['Subject'] = title
+    msg.attach(MIMEText(body, 'plain'))
+
+    # Send the email
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, msg.as_string())
+        server.quit()
+        return True
+    except Exception:
+        server.quit()
+        return False
+
+
 def login_required(f):  # This is used for to prevent unauthorized access
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -125,6 +156,9 @@ def register():
                 mysql.connection.commit()
                 cursor.close()
                 flash("You successfully entered", "success")
+                title = "Welcome"
+                body = "Welcome to Ali Abasgulizada's article web site"
+                send_message_to_email(email, title, body)
                 return redirect(url_for("login"))
             else:  # Check if user is aleady exist
                 cursor.close()
@@ -227,7 +261,6 @@ def article(id):
         if result2 > 0:
             comments = cursor.fetchall()
             cursor.close()
-            print(comments)
             return render_template("article.html", one_article=one_article, form=form, comments=comments)
         cursor.close()
         return render_template("article.html", one_article=one_article, form=form)
@@ -247,11 +280,16 @@ def comment(id):
             sql = "Insert into comments (article_id, email, content) values (%s, %s, %s)"
             cursor.execute(sql, (id, session["email"], content))
             mysql.connection.commit()
+            sql2 = "Select * from articles where id = %s"
+            cursor.execute(sql2, (id, ))
+            one_article = cursor.fetchone()
+            send_message_to_email(one_article["email"], session["email"] + " commented on your article with name: " + one_article["title"], content)
             cursor.close()
             flash("Comment added successfully", "success")
         else:
             flash("You must write something in comment", "warning")
     return redirect(url_for("article", id=id))
+
 
 @app.route("/edit/<string:id>", methods=["GET", "POST"])
 @login_required
