@@ -7,6 +7,7 @@ from passlib.hash import sha512_crypt
 from functools import wraps
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from datetime import timedelta
 
 app = Flask(__name__)
 app.secret_key = "STAR"
@@ -15,6 +16,7 @@ app.config["MYSQL_USER"] = "your username"
 app.config["MYSQL_PASSWORD"] = "your password"
 app.config["MYSQL_DB"] = "article"
 app.config["MYSQL_CURSORCLASS"] = "DictCursor"
+app.permanent_session_lifetime = timedelta(days=7) 
 mysql = MySQL(app)
 
 
@@ -185,6 +187,7 @@ def login():
                 session["name"] = user["name"]
                 session["surname"] = user["surname"]
                 session["email"] = email
+                session.permanent = True
                 flash(f"Welcome {user["name"]} {user["surname"]}", "success")
                 return redirect(url_for("index"))
             else:
@@ -199,6 +202,7 @@ def login():
 
 @app.route("/logout")
 def logout():
+    session.permanent = False
     session.clear()
     flash("You successfully logout", "success")
     return redirect(url_for("index"))
