@@ -1,3 +1,4 @@
+DROP DATABASE IF EXISTS article;
 CREATE DATABASE IF NOT EXISTS article;
 USE article;
 
