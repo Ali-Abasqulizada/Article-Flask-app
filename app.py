@@ -12,11 +12,11 @@ from datetime import timedelta
 app = Flask(__name__)
 app.secret_key = "STAR"
 app.config["MYSQL_HOST"] = "localhost"
-app.config["MYSQL_USER"] = "your username"
-app.config["MYSQL_PASSWORD"] = "your password"
+app.config["MYSQL_USER"] = "root"  # Write your mysql username. It is usually 'root'
+app.config["MYSQL_PASSWORD"] = "1234"  # Write your mysql password.
 app.config["MYSQL_DB"] = "article"
 app.config["MYSQL_CURSORCLASS"] = "DictCursor"
-app.permanent_session_lifetime = timedelta(days=7) 
+app.permanent_session_lifetime = timedelta(days=7)
 mysql = MySQL(app)
 
 
@@ -151,10 +151,9 @@ def register():
             cursor = mysql.connection.cursor()
             sql1 = "select * from users where email = %s"
             result = cursor.execute(sql1, (email, ))
-            print("result: ", result)
             if result == 0:
-                sql2 = "Insert into users(name, surname, email, password) values(%s, %s, %s, %s)"
-                cursor.execute(sql2, (name, surname, email, password))
+                sql2 = "Insert into users(name, surname, email, password, role) values(%s, %s, %s, %s, %s)"
+                cursor.execute(sql2, (name, surname, email, password, "user"))
                 mysql.connection.commit()
                 cursor.close()
                 flash("You successfully entered", "success")
@@ -182,13 +181,14 @@ def login():
         if result > 0:
             user = cursor.fetchone()
             cursor.close()
-            if sha512_crypt.verify(password, user["password"]):
-                session["logged_in"] = True
-                session["name"] = user["name"]
-                session["surname"] = user["surname"]
-                session["email"] = email
+            if sha512_crypt.verify(password, user['password']):
+                session['logged_in'] = True
+                session['name'] = user['name']
+                session['surname'] = user['surname']
+                session['email'] = email
+                session['admin'] = user['role']
                 session.permanent = True
-                flash(f"Welcome {user["name"]} {user["surname"]}", "success")
+                flash(f"Welcome {user['name']} {user['surname']}", "success")
                 return redirect(url_for("index"))
             else:
                 flash("Password is wrong", "error")
@@ -212,14 +212,82 @@ def logout():
 @login_required
 def control_panel():
     cursor = mysql.connection.cursor()
-    sql = "Select * from articles where email = %s"
-    result = cursor.execute(sql, (session["email"], ))
+    if session['admin'] == "superadmin" or session['admin'] == "admin":
+        sql = "Select * from articles"
+        result = cursor.execute(sql)
+    else:
+        sql2 = "Select * from articles where email = %s"
+        result = cursor.execute(sql2, (session['email'], ))
     if result > 0:
         all_articles = cursor.fetchall()
         cursor.close()
         return render_template("control_panel.html", all_articles=all_articles)
     cursor.close()
     return render_template("control_panel.html")
+
+
+@app.route("/control_panel_users")
+@login_required
+def control_panel_users():
+    if session['admin'] == "superadmin":
+        cursor = mysql.connection.cursor()
+        sql = "Select * from users where role != %s"
+        result = cursor.execute(sql, ("superadmin", ))
+        if result > 0:
+            all_users = cursor.fetchall()
+            cursor.close()
+            return render_template("control_panel_users.html", all_users=all_users)
+        cursor.close()
+        return render_template("control_panel_users.html")
+    flash("You cannot access this page, it is forbidden!", "error")
+    return redirect(url_for("index"))
+
+
+@app.route("/admin_role/<string:id>")
+@login_required
+def admin_role(id):
+    if session['admin'] == "superadmin":
+        cursor = mysql.connection.cursor()
+        sql = "Select * from users where id = %s"
+        result = cursor.execute(sql, (id, ))
+        if result > 0:
+            user = cursor.fetchone()
+            newRole = "admin"
+            if user['role'] == "admin":
+                newRole = "user"
+            sql2 = "Update users set role = %s where id = %s"
+            cursor.execute(sql2, (newRole, id))
+            mysql.connection.commit()
+            cursor.close()
+            flash(user['email'] + " has " + newRole + " role now", "info")
+            return redirect(url_for("control_panel_users"))
+        cursor.close()
+        flash("User does not exits", "warning")
+        return redirect(url_for("control_panel_users"))
+    flash("You cannot access this page, it is forbidden!", "error")
+    return redirect(url_for("index"))
+
+
+@app.route("/delete_user/<string:id>")
+@login_required
+def delete_user(id):
+    if session['admin'] == "superadmin":
+        cursor = mysql.connection.cursor()
+        sql = "Select * from users where id = %s"
+        result = cursor.execute(sql, (id, ))
+        if result > 0:
+            user = cursor.fetchone()
+            sql2 = "Delete from users where id = %s"
+            cursor.execute(sql2, (id, ))
+            mysql.connection.commit()
+            cursor.close()
+            flash(user["email"] + " deleted successfully", "success")
+            return redirect(url_for("control_panel_users"))
+        cursor.close()
+        flash("User does not exits", "warning")
+        return redirect(url_for("control_panel_users"))
+    flash("You cannot access this page, it is forbidden!", "error")
+    return redirect(url_for("index"))
 
 
 @app.route("/add_article", methods=["GET", "POST"])
@@ -231,7 +299,7 @@ def add_article():
         content = form.content.data
         cursor = mysql.connection.cursor()
         sql = "Insert into articles(title, content, email) values (%s, %s, %s)"
-        cursor.execute(sql, (title, content, session["email"]))
+        cursor.execute(sql, (title, content, session['email']))
         mysql.connection.commit()
         cursor.close()
         flash("Article added successfully", "success")
@@ -282,12 +350,14 @@ def comment(id):
             content = form.comment.data
             cursor = mysql.connection.cursor()
             sql = "Insert into comments (article_id, email, content) values (%s, %s, %s)"
-            cursor.execute(sql, (id, session["email"], content))
+            cursor.execute(sql, (id, session['email'], content))
             mysql.connection.commit()
             sql2 = "Select * from articles where id = %s"
             cursor.execute(sql2, (id, ))
             one_article = cursor.fetchone()
-            send_message_to_email(one_article["email"], session["email"] + " commented on your article with name: " + one_article["title"], content)
+            # This is link to my website you can change if you want
+            link = f"\nYou can visit site with this link: https://aliabasgulizada.pythonanywhere.com/article/{id}"
+            send_message_to_email(one_article['email'], session['email'] + " commented on your article with name: " + one_article['title'], content + link)
             cursor.close()
             flash("Comment added successfully", "success")
         else:
@@ -305,8 +375,8 @@ def update(id):
         if result > 0:
             one_article = cursor.fetchone()
             form = ArticleForm()
-            form.title.data = one_article["title"]
-            form.content.data = one_article["content"]
+            form.title.data = one_article['title']
+            form.content.data = one_article['content']
             cursor.close()
             return render_template("update.html", form=form)
         cursor.close()
@@ -339,7 +409,7 @@ def delete(id):
         flash("Article deleted successfully", "success")
         return redirect(url_for("control_panel"))
     cursor.close()
-    flash(session["name"] + " " + session["surname"] + " does not own this article", "error")
+    flash(session['name'] + " " + session['surname'] + " does not own this article", "error")
     return redirect(url_for("control_panel"))
 
 
@@ -358,6 +428,27 @@ def search():
         flash("Article is not found", "warning")
         return redirect(url_for("articles"))
     return redirect(url_for("articles"))
+
+
+@app.route("/delete_comment/<string:id>")
+@login_required
+def delete_comment(id):
+    if session['admin'] == "superadmin" or session['admin'] == "admin":
+        cursor = mysql.connection.cursor()
+        sql = "Select * from comments where id = %s"
+        result = cursor.execute(sql, (id, ))
+        if result > 0:
+            sql2 = "Delete from comments where id = %s"
+            cursor.execute(sql2, (id, ))
+            mysql.connection.commit()
+            cursor.close()
+            flash("Comment deleted successfully", "success")
+            return redirect(request.referrer or '/')
+        cursor.close()
+        flash("Comment does not exits", "warning")
+        return redirect(url_for("index"))
+    flash("You cannot access this page, it is forbidden!", "error")
+    return redirect(url_for("index"))
 
 
 if __name__ == "__main__":

@@ -32,6 +32,9 @@
                 <p>{{comment.email}}</p>
                 <p>{{comment.creation_time}}</p>
             </div>
+            {% if session.admin == "superadmin" or session.admin == "admin" %}
+            <a href="/delete_comment/{{comment.id}}" class="action-button delete">Delete</a>
+            {% endif %}
         </div>
         {% endfor %}
     </div>

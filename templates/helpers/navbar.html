@@ -74,9 +74,18 @@
                         <a href="/articles" class="nav__link">Articles</a>
                     </li>
                     {% if "logged_in" in session %}
+                    {% if session.admin == "superadmin" %}
+                    <li>
+                        <a href="/control_panel" class="nav__link">Contol Articles</a>
+                    </li>
+                    <li>
+                        <a href="/control_panel_users" class="nav__link">Control Users</a>
+                    </li>
+                    {% else %}
                     <li>
                         <a href="/control_panel" class="nav__link">Control Panel</a>
                     </li>
+                    {% endif %}
                     <li>
                         <a href="/logout" class="nav__link">Logout</a>
                     </li>

@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS article.users (
     surname TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
     email VARCHAR(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
     password TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+    role TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
     CONSTRAINT users_pk PRIMARY KEY (id),
     CONSTRAINT users_unique UNIQUE KEY (email)
 );

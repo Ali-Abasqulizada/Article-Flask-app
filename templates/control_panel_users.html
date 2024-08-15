@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block body %}
+<div id="index_page">
+    <h1 id="h1">{{session["name"] + ' ' + session["surname"]}}'s contol panel</h1>
+    <hr>
+    {% if all_users %}
+    <table class="article-table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>User</th>
+                <th>Admin role</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in all_users %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ user["email"] }}</td>
+                {% if user["role"] == "admin" %}
+                <td>
+                    <a href="/admin_role/{{user.id}}" class="action-button delete">Take admin role</a>
+                </td>
+                {% else %}
+                <td>
+                    <a href="/admin_role/{{user.id}}" class="action-button edit">Give admin role</a>
+                </td>
+                {% endif %}
+                <td>
+                    <a href="/delete_user/{{user.id}}" class="action-button delete">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="alert-warning_comment" style="margin-top: 20px;">There is not any user</div>
+    {% endif %}
+</div>
+{% endblock %}
+
