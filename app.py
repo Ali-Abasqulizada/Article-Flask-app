@@ -101,7 +101,7 @@ def send_message_to_email(receiver_email, title, body):
     sender_email = "flaskapp2004@gmail.com"
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
-    password = "gacgbjeapyaxifla"
+    password = "*"
 
     # Create the email
     msg = MIMEMultipart()
